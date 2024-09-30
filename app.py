@@ -17,7 +17,7 @@ class CourseRecommendationSystem:
 
     def recommend_course(self, preferences):
         query = sql.SQL("""
-            SELECT id, title, description, price, duration, status
+            SELECT id, title, description, price, duration, status, image_url
             FROM courses_course
             WHERE 1=1
         """)
@@ -52,7 +52,8 @@ class CourseRecommendationSystem:
                 'description': course[2],
                 'price': course[3],
                 'duration': course[4],
-                'status': course[5]
+                'status': course[5],
+                'image_url': course[6]
             }
         else:
             return None

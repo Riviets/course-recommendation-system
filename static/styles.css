@@ -80,10 +80,11 @@ select {
   box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.605);
   border-radius: 15px;
   margin-bottom: 40px;
+  gap: 40px;
 }
 .course__title {
   font-weight: 700;
-  margin-bottom: 70px;
+  margin-bottom: 10px;
   padding-bottom: 4px;
   border-bottom: 4px solid #ff6600;
   max-width: -moz-fit-content;
@@ -95,7 +96,8 @@ select {
 }
 .course__info {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 40px;
 }
 .course__info-basic {
   display: flex;
@@ -109,10 +111,9 @@ select {
   flex-direction: column;
   gap: 10px;
   flex-basis: calc((100% - 40px) * 0.4166666667);
-  font-size: 14px;
+  font-size: 18px;
 }
 .course__info-detailed p {
-  padding-left: 30px;
   margin: 0;
 }
 .course__info-detailed p::before {

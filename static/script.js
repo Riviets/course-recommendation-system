@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         })
         .then(response => response.json())
         .then(response => {
-            const course = response.course; // Витягнути курс із об'єкта
+            const course = response.course;
             displayCourseRecommendation(course);
             showRestartButton();
         });
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     function displayCourseRecommendation(course) {
         const resultContainer = document.getElementById('result');
-        resultContainer.classList.remove('hidden'); // Показати елемент результату
+        resultContainer.classList.remove('hidden');
         if (course) {
             resultContainer.innerHTML = `
                 <div class="course">
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     <div class="course__info">
                         <div class="course__info-basic">
                             <p class="course__description">${course.description}</p>
-                            ${course.image_url ? `<img src="${course.image_url}" alt="${course.title}" class="course__image img-fluid mb-4" />` : ''}
+                            ${course.image_url ? `<img src="${course.image_url}" alt="${course.title}" class="course__image img-fluid mb-4" />` : ''} 
                         </div>
                         <div class="course__info-detailed">
                             <p><strong>Duration:</strong> ${course.duration} weeks</p>
@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             resultContainer.innerHTML = `<p>Курс не знайдено</p>`;
         }
     }
+    
 
     function showRestartButton() {
         const restartButton = document.createElement('button');
@@ -103,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     function resetTest() {
         currentQuestionIndex = 0;
         preferences = {};
-        document.getElementById('result').classList.add('hidden'); // Сховати елемент результату
+        document.getElementById('result').classList.add('hidden');
         showQuestion(currentQuestionIndex);
     }
 
