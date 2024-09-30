@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система рекомендації курсів</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+<body>
+    <div class="testing-section">
+        <div class="container">
+            <h1 class="testing__title">Система рекомендації курсів</h1>
+            <form class="testing__form" id="preferences-form">
+                <div class="testing__questions" id="questions-container"></div>
+                <button  class="testing__btn btn" type="submit">Отримати рекомендацію</button>
+            </form>
+            <div class="testing__result" id="result"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+
+
+</html>
