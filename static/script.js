@@ -5,17 +5,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     const form = document.getElementById('preferences-form');
     let preferences = {};
 
-    // Функція для відображення поточного питання
     function showQuestion(index) {
-        questionsContainer.innerHTML = ''; // Очищуємо контейнер перед новим питанням
+        questionsContainer.innerHTML = '';
 
         if (index >= questions.length) {
-            form.querySelector('button[type="submit"]').style.display = 'block'; // Показуємо кнопку після завершення питань
+            submitPreferences(preferences);
             return;
         }
 
         const question = questions[index];
-
         const questionCard = document.createElement('div');
         questionCard.classList.add('question-card');
         questionCard.innerHTML = `<label>${question.label}</label>`;
@@ -29,12 +27,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             radioOption.addEventListener('click', function () {
                 preferences[question.id] = this.value;
 
-                // Умовна логіка для пропуску питання про вартість
                 if (question.id === 'status' && this.value === 'free') {
-                    currentQuestionIndex++; // Пропустити питання про вартість
+                    currentQuestionIndex++;
                 }
 
-                // Показуємо наступне питання після відповіді
                 currentQuestionIndex++;
                 showQuestion(currentQuestionIndex);
             });
@@ -50,20 +46,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         questionsContainer.appendChild(questionCard);
     }
 
-    // Функція для отримання питань з сервера
     async function fetchQuestions() {
         const response = await fetch('/questions');
         return response.json();
     }
 
-    // Обробка надсилання форми
-    form.addEventListener('submit', function (e) {
-        e.preventDefault(); // Запобігаємо звичайному надсиланню форми
-
-        submitPreferences(preferences);
-    });
-
-    // Надсилання відповідей на сервер і отримання рекомендації
     function submitPreferences(preferences) {
         fetch('/recommend', {
             method: 'POST',
@@ -71,12 +58,54 @@ document.addEventListener('DOMContentLoaded', async function () {
             body: JSON.stringify(preferences),
         })
         .then(response => response.json())
-        .then(data => {
-            document.getElementById('result').textContent = `Рекомендований курс: ${data.course.title}`;
+        .then(response => {
+            const course = response.course; // Витягнути курс із об'єкта
+            displayCourseRecommendation(course);
+            showRestartButton();
         });
     }
 
-    // Спочатку ховаємо кнопку відправки і показуємо перше питання
-    form.querySelector('button[type="submit"]').style.display = 'none';
+    function displayCourseRecommendation(course) {
+        const resultContainer = document.getElementById('result');
+        resultContainer.classList.remove('hidden'); // Показати елемент результату
+        if (course) {
+            resultContainer.innerHTML = `
+                <div class="course">
+                    <h1 class="course__title">${course.title}</h1>
+                    <div class="course__info">
+                        <div class="course__info-basic">
+                            <p class="course__description">${course.description}</p>
+                            ${course.image_url ? `<img src="${course.image_url}" alt="${course.title}" class="course__image img-fluid mb-4" />` : ''}
+                        </div>
+                        <div class="course__info-detailed">
+                            <p><strong>Duration:</strong> ${course.duration} weeks</p>
+                            <p><strong>Status:</strong> ${course.status}</p>
+                            <p><strong>Price:</strong> ${course.price ? `${course.price} UAH` : 'Free'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultContainer.innerHTML = `<p>Курс не знайдено</p>`;
+        }
+    }
+
+    function showRestartButton() {
+        const restartButton = document.createElement('button');
+        restartButton.textContent = 'Почати заново';
+        restartButton.classList.add('testing__btn', 'btn');
+        restartButton.addEventListener('click', function () {
+            resetTest();
+        });
+        document.getElementById('result').appendChild(restartButton);
+    }
+
+    function resetTest() {
+        currentQuestionIndex = 0;
+        preferences = {};
+        document.getElementById('result').classList.add('hidden'); // Сховати елемент результату
+        showQuestion(currentQuestionIndex);
+    }
+
     showQuestion(currentQuestionIndex);
 });

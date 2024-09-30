@@ -17,7 +17,7 @@ class CourseRecommendationSystem:
 
     def recommend_course(self, preferences):
         query = sql.SQL("""
-            SELECT id, title, description, price, duration
+            SELECT id, title, description, price, duration, status
             FROM courses_course
             WHERE 1=1
         """)
@@ -28,7 +28,7 @@ class CourseRecommendationSystem:
         elif preferences['status'] == 'premium':
             if preferences['price_category'] == 'до 500':
                 query += sql.SQL(" AND (price < 500)")
-            elif preferences['price_category'] == '50-2000':
+            elif preferences['price_category'] == '500-2000':
                 query += sql.SQL(" AND (price >= 500 AND price < 2000)")
             elif preferences['price_category'] == '2000 і вище':
                 query += sql.SQL(" AND (price >= 2000)")
@@ -51,7 +51,8 @@ class CourseRecommendationSystem:
                 'title': course[1],
                 'description': course[2],
                 'price': course[3],
-                'duration': course[4]
+                'duration': course[4],
+                'status': course[5]
             }
         else:
             return None
