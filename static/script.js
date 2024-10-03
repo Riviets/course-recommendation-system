@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentQuestionIndex = 0;
     const answers = {};
 
-    // Отримання питань від сервера
     fetch('/get-questions')
         .then(response => response.json())
         .then(data => {
@@ -49,68 +48,77 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.preventDefault();
                 answers[question.type] = select.value;
                 currentQuestionIndex++;
-                if (currentQuestionIndex < questions.length) {
-                    showNextQuestion();
-                } else {
-                    submitAnswers();
-                }
+                submitAnswers(currentQuestionIndex >= questions.length);
             });
         }
     }
 
-    function submitAnswers() {
+    function submitAnswers(isFinal = false) {
         fetch('/submit-answer', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ ...answers, is_last: true })
+            body: JSON.stringify({ ...answers, is_last: isFinal })
         })
         .then(response => response.json())
-        .then(course => {
-            if (course.error) {
-                resultContainer.innerHTML = `<p>${course.error}</p>`;
+        .then(data => {
+            displayResults(data.courses);
+            if (data.is_final || isFinal) {
+                questionsContainer.classList.add('hidden');
             } else {
-                resultContainer.innerHTML = `
-                    <div class="course">
-                        <h1 class="course__title">${course.title}</h1>
-                        <div class="course__info">
-                            <div class="course__info-basic">
-                                <p class="course__description">${course.description}</p>
-                                ${course.image_url ? `<img src="${course.image_url}" alt="${course.title}" class="course__image img-fluid mb-4" />` : ''} 
-                            </div>
-                            <div class="course__info-detailed">
-                                <p><strong>Duration:</strong> ${course.duration} days</p>
-                                <p><strong>Status:</strong> ${course.status}</p>
-                                <p><strong>Price:</strong> ${course.price ? `${course.price} UAH` : 'Free'}</p>
-                                <p><strong>Category:</strong> ${course.category}</p>
-                                <p><strong>Skill Level:</strong> ${course.skill_level}</p>
-                                <p><strong>Age Category:</strong> ${course.age_category}</p>
-                                <p><strong>Difficulty:</strong> ${course.difficulty}</p>
-                                <p><strong>Score:</strong> ${course.score}</p>
-                            </div>
+                showNextQuestion();
+            }
+        });
+    }
+
+    function displayResults(courses) {
+        resultContainer.innerHTML = '';
+        if (courses.length === 0) {
+            resultContainer.innerHTML = '<p>На жаль, не знайдено курсів, які відповідають вашим критеріям.</p>';
+        } else {
+            courses.forEach(course => {
+                const courseElement = document.createElement('div');
+                courseElement.classList.add('course');
+                courseElement.innerHTML = `
+                    <h2 class="course__title">${course.title}</h2>
+                    <div class="course__info">
+                        <div class="course__info-basic">
+                            <p class="course__description">${course.description}</p>
+                        </div>
+                        <div class="course__info-detailed">
+                            <p><strong>Duration:</strong> ${course.duration} days</p>
+                            <p><strong>Status:</strong> ${course.status}</p>
+                            <p><strong>Price:</strong> ${course.price ? `${course.price} UAH` : 'Free'}</p>
+                            <p><strong>Category:</strong> ${course.category}</p>
+                            <p><strong>Skill Level:</strong> ${course.skill_level}</p>
+                            <p><strong>Age Category:</strong> ${course.age_category}</p>
+                            <p><strong>Difficulty:</strong> ${course.difficulty}</p>
                         </div>
                     </div>
                 `;
-            }
-
-            resultContainer.classList.remove('hidden');
-            questionsContainer.classList.add('hidden');
-
-            const restartBtn = document.createElement('button');
-            restartBtn.innerText = 'Почати заново';
-            restartBtn.classList.add('btn', 'testing__btn');
-            resultContainer.appendChild(restartBtn);
-
-            restartBtn.addEventListener('click', function () {
-                currentQuestionIndex = 0;
-                for (let key in answers) {
-                    delete answers[key];
-                }
-                resultContainer.classList.add('hidden');
-                questionsContainer.classList.remove('hidden');
-                showNextQuestion();
+                resultContainer.appendChild(courseElement);
             });
-        });
+        }
+        resultContainer.classList.remove('hidden');
     }
+
+    const restartBtn = document.createElement('button');
+    restartBtn.innerText = 'Почати заново';
+    restartBtn.style.maxWidth = '800px';
+    restartBtn.style.display = 'block';
+    restartBtn.style.margin = '20px auto';
+    restartBtn.style.padding = '10px 20px';
+    restartBtn.style.textAlign = 'center'; 
+    restartBtn.classList.add('btn', 'testing__btn');
+    restartBtn.addEventListener('click', function () {
+        currentQuestionIndex = 0;
+        for (let key in answers) {
+            delete answers[key];
+        }
+        resultContainer.classList.add('hidden');
+        questionsContainer.classList.remove('hidden');
+        showNextQuestion();
+    });
+    document.body.appendChild(restartBtn);
 });

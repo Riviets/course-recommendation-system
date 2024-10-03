@@ -4,7 +4,6 @@ import os
 
 app = Flask(__name__)
 
-# Підключення до бази даних
 def get_db_connection():
     conn = psycopg2.connect(
         dbname=os.environ.get('DB_NAME', 'EducationalPlatformKPZ'),
@@ -15,129 +14,107 @@ def get_db_connection():
     )
     return conn
 
-# Повертає запитання для тестування
+questions = [
+    {
+        'id': 1,
+        'question': 'Оберіть категорію курсу',
+        'options': ['Programming', 'Design', 'Marketing'],
+        'type': 'category'
+    },
+    {
+        'id': 2,
+        'question': 'Оберіть рівень навичок',
+        'options': ['Beginner', 'Intermediate', 'Advanced'],
+        'type': 'skill_level'
+    },
+    {
+        'id': 3,
+        'question': 'Оберіть вартість курсу',
+        'options': ['Безкоштовний', 'Платний'],
+        'type': 'status'
+    },
+    {
+        'id': 4,
+        'question': 'Оберіть тривалість курсу',
+        'options': ['До 20', '20-40', 'Більше 40'],
+        'type': 'duration'
+    },
+    {
+        'id': 5,
+        'question': 'Оберіть вікову категорію',
+        'options': ['12-18', '18-25', '25-40'],
+        'type': 'age_category'
+    },
+    {
+        'id': 6,
+        'question': 'Оберіть складність курсу',
+        'options': ['Easy', 'Medium', 'Hard'],
+        'type': 'difficulty'
+    }
+]
+
 @app.route('/get-questions', methods=['GET'])
 def get_questions():
-    questions = [
-        {
-            'id': 1,
-            'question': 'Оберіть категорію курсу',
-            'options': ['Programming', 'Design', 'Marketing'],
-            'type': 'category'
-        },
-        {
-            'id': 2,
-            'question': 'Оберіть рівень навичок',
-            'options': ['Beginner', 'Intermediate', 'Advanced'],
-            'type': 'skill_level'
-        },
-        {
-            'id': 3,
-            'question': 'Оберіть вартість курсу',
-            'options': ['Безкоштовний', 'Платний'],
-            'type': 'status'
-        },
-        {
-            'id': 4,
-            'question': 'Оберіть тривалість курсу',
-            'options': ['До 20', '20-40', 'Більше 40'],
-            'type': 'duration'
-        },
-        {
-            'id': 5,
-            'question': 'Оберіть вікову категорію',
-            'options': ['12-18', '18-25', '25-40'],
-            'type': 'age_category'
-        },
-        {
-            'id': 6,
-            'question': 'Оберіть складність курсу',
-            'options': ['Easy', 'Medium', 'Hard'],
-            'type': 'difficulty'
-        }
-    ]
     return jsonify(questions)
 
 @app.route('/submit-answer', methods=['POST'])
 def submit_answer():
     data = request.json
-    
-    # Тут ви можете реалізувати логіку для зберігання проміжних відповідей
-    # Наприклад, використовуючи сесії Flask або тимчасове сховище
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    if data.get('is_last', False):
-        # Отримуємо всі відповіді
-        category = data.get('category')
-        skill_level = data.get('skill_level')
-        status = data.get('status')
-        duration = data.get('duration')
-        age_category = data.get('age_category')
-        difficulty = data.get('difficulty')
+    query = "SELECT * FROM courses WHERE 1=1"
+    params = []
 
-        conn = get_db_connection()
-        cur = conn.cursor()
+    for key, value in data.items():
+        if key != 'is_last':
+            if key == 'duration':
+                if value == 'До 20':
+                    query += " AND duration < 20"
+                elif value == '20-40':
+                    query += " AND duration BETWEEN 20 AND 40"
+                elif value == 'Більше 40':
+                    query += " AND duration > 40"
+            else:
+                query += f" AND {key} = %s"
+                params.append(value)
 
-        # Умови для тривалості курсу
-        duration_condition = ""
-        if duration == 'До 20':
-            duration_condition = "duration < 20"
-        elif duration == '20-40':
-            duration_condition = "duration BETWEEN 20 AND 40"
-        elif duration == 'Більше 40':
-            duration_condition = "duration > 40"
-
-        # Формування SQL-запиту
-        query = f"""
-            SELECT title, description, price, duration, status, category, skill_level, age_category, difficulty, score 
-            FROM courses 
-            WHERE category = %s AND skill_level = %s AND status = %s 
-            AND {duration_condition}
-        """
+    try:
+        cur.execute(query, params)
+        courses = cur.fetchall()
         
-        params = [category, skill_level, status]  # Основні параметри
-
-        # Додаємо параметри для age_category та difficulty, якщо вони задані
-        if age_category:
-            query += " AND age_category = %s"
-            params.append(age_category)
-        if difficulty:
-            query += " AND difficulty = %s"
-            params.append(difficulty)
-
-        query += " LIMIT 1;"
-
-        try:
-            cur.execute(query, params)
-            course = cur.fetchone()
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-        finally:
-            conn.close()
-
-        if course:
-            response = {
-                'title': course[0],
-                'description': course[1],
-                'price': course[2],
-                'duration': course[3],
-                'status': course[4],
-                'category': course[5],
-                'skill_level': course[6],
-                'age_category': course[7],
-                'difficulty': course[8],
-                'score': course[9],
-            }
-        else:
-            response = {'error': 'Не знайдено відповідного курсу.'}
-
-        return jsonify(response)
+        if len(courses) == 0:
+            # Якщо курсів не знайдено, повертаємо останній підходящий курс
+            query_last = query.rsplit('AND', 1)[0] + " ORDER BY id DESC LIMIT 1"
+            cur.execute(query_last, params[:-1])
+            courses = cur.fetchall()
+        
+        response = []
+        for course in courses:
+            response.append({
+                'id': course[0],
+                'title': course[1],
+                'description': course[2],
+                'price': course[3],
+                'duration': course[4],
+                'status': course[5],
+                'category': course[6],
+                'skill_level': course[7],
+                'age_category': course[8],
+                'difficulty': course[9]
+            })
+        
+        return jsonify({
+            'courses': response,
+            'count': len(response),
+            'is_final': len(response) <= 1 or data.get('is_last', False)
+        })
     
-    return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
 
-
-
-
-# Головна сторінка
 @app.route('/')
 def index():
     return render_template('index.html')
