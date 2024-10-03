@@ -129,4 +129,9 @@ select {
         margin-bottom: 20px;
     }
   }
+  .question{
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
   

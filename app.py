@@ -84,7 +84,6 @@ def submit_answer():
         courses = cur.fetchall()
         
         if len(courses) == 0:
-            # Якщо курсів не знайдено, повертаємо останній підходящий курс
             query_last = query.rsplit('AND', 1)[0] + " ORDER BY id DESC LIMIT 1"
             cur.execute(query_last, params[:-1])
             courses = cur.fetchall()
